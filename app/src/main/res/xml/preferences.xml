@@ -32,5 +32,12 @@
             android:key="emoncms_kwh_feed"
             android:title="Bar graph feed (kWh)"
             android:enabled="false"/>
+
+        <ListPreference
+            android:key="emoncms_escale"
+            android:title="Wh or kWh Feed"
+            android:defaultValue="0"
+            android:entries="@array/escale_text"
+            android:entryValues="@array/escale_values" />
     </PreferenceCategory>
 </PreferenceScreen>

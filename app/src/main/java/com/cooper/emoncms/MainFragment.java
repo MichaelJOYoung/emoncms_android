@@ -26,6 +26,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.XAxisValueFormatter;
+import com.github.mikephil.charting.formatter.YAxisValueFormatter;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.json.JSONArray;
@@ -33,6 +34,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -45,6 +47,7 @@ public class MainFragment extends Fragment
     static String emoncmsURL;
     static String emoncmsAPIKEY;
     static String emoncmsProtocol;
+    static float emoncmsescale;
     TextView txtPower;
     TextView txtUseToday;
     TextView txtDebug;
@@ -109,7 +112,7 @@ public class MainFragment extends Fragment
                                     if (date <= chart2EndTime)
                                     {
                                         dates.add(date);
-                                        power.add(((Double) row.getDouble(1)).floatValue());
+                                        power.add(((Double) row.getDouble(1)).floatValue() * emoncmsescale);
                                     }
                                 }
                                 catch (JSONException e)
@@ -201,7 +204,7 @@ public class MainFragment extends Fragment
                                     }
                                     else if (id == kWhFeelId)
                                     {
-                                        totalPowerUsage = ((Double) row.getDouble("value")).floatValue();
+                                        totalPowerUsage = ((Double) row.getDouble("value")).floatValue() * emoncmsescale;
                                     }
 
                                 }
@@ -375,6 +378,7 @@ public class MainFragment extends Fragment
         wattFeedId = Integer.valueOf(SP.getString("emoncms_power_feed", "0"));
         kWhFeelId = Integer.valueOf(SP.getString("emoncms_kwh_feed", "0"));
         emoncmsProtocol = SP.getBoolean("emoncms_usessl", false) ? "https://" : "http://";
+        emoncmsescale = Integer.valueOf(SP.getString("emoncms_escale", "0")) == 0 ? 1.0F : 0.001F;
     }
 
     @Override
@@ -418,7 +422,7 @@ public class MainFragment extends Fragment
         xAxis.setDrawLabels(true);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(Color.parseColor("#cccccc"));
-        xAxis.setValueFormatter(new MyCustomXAxisValueFormatter());
+        xAxis.setValueFormatter(new TimeFromEpochXAxisValueFormatter());
 
         chart2 = (BarChart) view.findViewById(R.id.chart2);
         chart2.setDrawGridBackground(false);
@@ -467,7 +471,7 @@ public class MainFragment extends Fragment
         mHandler.removeCallbacks(mGetFeedsRunner);
     }
 
-    public class MyCustomXAxisValueFormatter implements XAxisValueFormatter
+    public class TimeFromEpochXAxisValueFormatter implements XAxisValueFormatter
     {
         @Override
         public String getXValue(String original, int index, ViewPortHandler viewPortHandler)

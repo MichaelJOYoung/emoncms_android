@@ -1,0 +1,11 @@
+<resources>
+    <string-array name="escale_text">
+        <item>kWh elapsed</item>
+        <item>Watt hours elapsed</item>
+    </string-array>
+
+    <string-array name="escale_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+</resources>
