@@ -1,0 +1,81 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                android:animateLayoutChanges="true"
+                tools:context=".MainActivity$PlaceholderFragment">
+
+
+    <TextView
+        android:id="@+id/txtDebug"
+        android:textSize="@dimen/main_header_text_size"
+        android:textColor="@color/textColorErrorRed"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/powerLabel"
+        android:text="POWER NOW"
+        android:textSize="@dimen/main_header_text_size"
+        android:textColor="#cccccc"
+        android:textStyle="bold"
+        android:layout_below="@id/txtDebug"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/txtPower"
+        android:textSize="@dimen/main_stats_text_size"
+        android:textStyle="bold"
+        android:layout_below="@id/powerLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/useTodayLabel"
+        android:text="USE TODAY"
+        android:textSize="@dimen/main_header_text_size"
+        android:textColor="#cccccc"
+        android:textStyle="bold"
+        android:layout_below="@id/txtDebug"
+        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/txtUseToday"
+        android:textSize="@dimen/main_stats_text_size"
+        android:textStyle="bold"
+        android:layout_below="@id/useTodayLabel"
+        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:layout_below="@id/txtPower"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart1"
+            android:layout_weight="0.5"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/chart2"
+            android:layout_weight="0.5"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
+
+</RelativeLayout>

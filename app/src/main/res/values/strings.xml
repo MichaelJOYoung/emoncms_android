@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">emoncms</string>
+
+    <string name="tag_main_fragment">main_fragment</string>
+    <string name="tag_settings_fragment">settings_fragment</string>
+    <string name="tag_navigation_fragment">navigation_fragment</string>
+
+    <string name="title_section1">MyElectric</string>
+    <string name="title_section2">Settings</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_example">Example action</string>
+
+    <string name="action_settings">Settings</string>
+</resources>

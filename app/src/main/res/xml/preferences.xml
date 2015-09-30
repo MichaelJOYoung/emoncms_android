@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="EMONCMS CONNECTIVITY">
+
+        <EditTextPreference
+            android:key="emoncms_url"
+            android:title="emoncms URL"
+            android:summary="emoncms URL without http://"
+            android:defaultValue="emoncms.org"/>
+
+        <CheckBoxPreference
+            android:key="emoncms_usessl"
+            android:title="Use SSL"
+            android:summary="Connect using https only if your site supports it. emoncms.org does not support https." />
+
+        <EditTextPreference
+            android:key="emoncms_apikey"
+            android:title="emoncms API KEY"
+            android:summary="emoncms API KEY" />
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="FEEDS">
+
+        <ListPreference
+            android:key="emoncms_power_feed"
+            android:title="Power feed (Watts)"
+            android:enabled="false"/>
+
+        <ListPreference
+            android:key="emoncms_kwh_feed"
+            android:title="Bar graph feed (kWh)"
+            android:enabled="false"/>
+    </PreferenceCategory>
+</PreferenceScreen>
