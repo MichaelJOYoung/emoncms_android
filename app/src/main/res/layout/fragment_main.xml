@@ -58,11 +58,55 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txtPower"
+            android:text="3h"
+            android:id="@+id/btnChart1_3H"/>
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txtPower"
+            android:text="6h"
+            android:layout_toRightOf="@id/btnChart1_3H"
+            android:id="@+id/btnChart1_6H"/>
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txtPower"
+            android:layout_toRightOf="@id/btnChart1_6H"
+            android:text="D"
+            android:id="@+id/btnChart1_D"/>
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txtPower"
+            android:layout_toRightOf="@id/btnChart1_D"
+            android:text="W"
+            android:id="@+id/btnChart1_W"/>
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txtPower"
+            android:layout_toRightOf="@id/btnChart1_W"
+            android:text="M"
+            android:id="@+id/btnChart1_M"/>
+
     <LinearLayout
-        android:layout_below="@id/txtPower"
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_below="@id/txtPower">
 
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart1"

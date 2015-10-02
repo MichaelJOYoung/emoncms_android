@@ -4,7 +4,7 @@
     <style name="AppTheme" parent="android:Theme.Holo.NoActionBar">
         <item name="android:textColor">@color/textColorBlue</item>
         <item name="android:activatedBackgroundIndicator">@drawable/list_activated_background</item>
-        <item name="android:background">@color/background</item>
+        <item name="android:background">@color/windowBackground</item>
     </style>
 
 </resources>

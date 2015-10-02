@@ -9,7 +9,9 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.android.volley.Response;
@@ -26,7 +28,6 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.XAxisValueFormatter;
-import com.github.mikephil.charting.formatter.YAxisValueFormatter;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.json.JSONArray;
@@ -58,6 +59,13 @@ public class MainFragment extends Fragment
     Float yesterdaysPowerUsage = 0F;
     Float totalPowerUsage = 0F;
     int todaysDate = 0;
+    int powerGraphLength = -6;
+    boolean resetPowerGraph = false;
+    Button chart1_3h;
+    Button chart1_6h;
+    Button chart1_D;
+    Button chart1_W;
+    Button chart1_M;
 
     int wattFeedId = 0;
     int kWhFeelId = 0;
@@ -77,8 +85,8 @@ public class MainFragment extends Fragment
             long timenow_s = timenow / 1000;
             long endTime = ((Double) Math.floor(timenow_s / interval)).longValue() * interval;
             long startTime = endTime - interval * 6;
-            startTime -= offset * 3600;
-            endTime -= offset * 3600;
+            startTime -= (offset * 3600);
+            endTime -= (offset * 3600);
             startTime *= 1000;
             endTime *= 1000;
 
@@ -263,11 +271,13 @@ public class MainFragment extends Fragment
         {
             Calendar cal = Calendar.getInstance();
             long endTime = cal.getTimeInMillis();
-            cal.add(Calendar.HOUR, -6);
-            long startTime = cal.getTimeInMillis();
-            final int graph_interval = 15;
+            cal.add(Calendar.HOUR, powerGraphLength);
 
-            String url = String.format("%s%s/feed/data.json?id=%d&start=%d&end=%d&interval=%d&skipmissing=1&limitinterval=1&apikey=%s", emoncmsProtocol, emoncmsURL, wattFeedId, startTime, endTime,graph_interval, emoncmsAPIKEY);
+            long startTime = cal.getTimeInMillis();
+            int npoints = 1500;
+            final int graph_interval = Math.round(((endTime - startTime)/npoints)/1000);
+
+            String url = String.format("%s%s/feed/data.json?id=%d&start=%d&end=%d&interval=%d&skipmissing=1&limitinterval=1&apikey=%s", emoncmsProtocol, emoncmsURL, wattFeedId, startTime, endTime, graph_interval, emoncmsAPIKEY);
             Log.i("EMONCMS", url);
             JsonArrayRequest jsArrayRequest = new JsonArrayRequest(url, new Response.Listener<JSONArray>()
             {
@@ -292,7 +302,14 @@ public class MainFragment extends Fragment
                         set.setHighlightEnabled(false);
                         data.addDataSet(set);
                     }
-                    else if (data.getXValCount() > 0)
+
+                    if (resetPowerGraph)
+                    {
+                        data.getXVals().clear();
+                        set.clear();
+                    }
+
+                    if (data.getXValCount() > 0)
                     {
                         lastEntry = Long.parseLong(data.getXVals().get(data.getXValCount()-1));
                     }
@@ -335,6 +352,7 @@ public class MainFragment extends Fragment
 
                     chart1.notifyDataSetChanged();
                     chart1.invalidate();
+                    resetPowerGraph = false;
 
                     if (blnDebugOnShow)
                     {
@@ -398,6 +416,17 @@ public class MainFragment extends Fragment
         txtPower = (TextView) view.findViewById(R.id.txtPower);
         txtUseToday = (TextView) view.findViewById(R.id.txtUseToday);
         txtDebug = (TextView) view.findViewById(R.id.txtDebug);
+        chart1_3h = (Button) view.findViewById(R.id.btnChart1_3H);
+        chart1_6h = (Button) view.findViewById(R.id.btnChart1_6H);
+        chart1_D = (Button) view.findViewById(R.id.btnChart1_D);
+        chart1_W = (Button) view.findViewById(R.id.btnChart1_W);
+        chart1_M = (Button) view.findViewById(R.id.btnChart1_M);
+
+        chart1_3h.setOnClickListener(chart1ButtonListener);
+        chart1_6h.setOnClickListener(chart1ButtonListener);
+        chart1_D.setOnClickListener(chart1ButtonListener);
+        chart1_W.setOnClickListener(chart1ButtonListener);
+        chart1_M.setOnClickListener(chart1ButtonListener);
 
         chart1 = (LineChart) view.findViewById(R.id.chart1);
         chart1.setDrawGridBackground(false);
@@ -468,15 +497,46 @@ public class MainFragment extends Fragment
     {
         super.onPause();
         HTTPClient.getInstance(getActivity()).cancellAll(TAG);
-        mHandler.removeCallbacks(mGetFeedsRunner);
+        mHandler.removeCallbacksAndMessages(null);
     }
+
+    private OnClickListener chart1ButtonListener = new OnClickListener() {
+        public void onClick(View v) {
+        switch (v.getId())
+        {
+            case R.id.btnChart1_3H:
+                powerGraphLength = -3;
+                resetPowerGraph = true;
+                break;
+            case R.id.btnChart1_6H:
+                powerGraphLength = -6;
+                resetPowerGraph = true;
+                break;
+            case R.id.btnChart1_D:
+                powerGraphLength = -24;
+                resetPowerGraph = true;
+                break;
+            case R.id.btnChart1_W:
+                powerGraphLength = -168; // 7 * 24
+                resetPowerGraph = true;
+                break;
+            case R.id.btnChart1_M: // 4 Weeks
+                powerGraphLength = -720; // 30 * 24
+                resetPowerGraph = true;
+                break;
+        }
+        HTTPClient.getInstance(getActivity()).cancellAll(TAG);
+        mHandler.removeCallbacksAndMessages(null);
+        mHandler.post(mGetPowerHistoryRunner);
+        }
+    };
 
     public class TimeFromEpochXAxisValueFormatter implements XAxisValueFormatter
     {
         @Override
         public String getXValue(String original, int index, ViewPortHandler viewPortHandler)
         {
-            DateFormat df = new SimpleDateFormat("hh:mm:ss");
+            DateFormat df = new SimpleDateFormat("HH:mm:ss");
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(Long.parseLong(original));
             return (df.format(cal.getTime()));
