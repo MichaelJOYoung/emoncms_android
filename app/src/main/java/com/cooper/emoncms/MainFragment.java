@@ -502,32 +502,34 @@ public class MainFragment extends Fragment
 
     private OnClickListener chart1ButtonListener = new OnClickListener() {
         public void onClick(View v) {
-        switch (v.getId())
-        {
-            case R.id.btnChart1_3H:
-                powerGraphLength = -3;
-                resetPowerGraph = true;
-                break;
-            case R.id.btnChart1_6H:
-                powerGraphLength = -6;
-                resetPowerGraph = true;
-                break;
-            case R.id.btnChart1_D:
-                powerGraphLength = -24;
-                resetPowerGraph = true;
-                break;
-            case R.id.btnChart1_W:
-                powerGraphLength = -168; // 7 * 24
-                resetPowerGraph = true;
-                break;
-            case R.id.btnChart1_M: // 4 Weeks
-                powerGraphLength = -720; // 30 * 24
-                resetPowerGraph = true;
-                break;
-        }
-        HTTPClient.getInstance(getActivity()).cancellAll(TAG);
-        mHandler.removeCallbacksAndMessages(null);
-        mHandler.post(mGetPowerHistoryRunner);
+
+            switch (v.getId())
+            {
+                case R.id.btnChart1_3H:
+                    powerGraphLength = -3;
+                    resetPowerGraph = true;
+                    break;
+                case R.id.btnChart1_6H:
+                    powerGraphLength = -6;
+                    resetPowerGraph = true;
+                    break;
+                case R.id.btnChart1_D:
+                    powerGraphLength = -24;
+                    resetPowerGraph = true;
+                    break;
+                case R.id.btnChart1_W:
+                    powerGraphLength = -168; // 7 * 24
+                    resetPowerGraph = true;
+                    break;
+                case R.id.btnChart1_M: // 4 Weeks
+                    powerGraphLength = -720; // 30 * 24
+                    resetPowerGraph = true;
+                    break;
+            }
+
+            HTTPClient.getInstance(getActivity()).cancellAll(TAG);
+            mHandler.removeCallbacksAndMessages(null);
+            mHandler.post(mGetPowerHistoryRunner);
         }
     };
 
