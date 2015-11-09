@@ -14,7 +14,7 @@
         <item name="android:colorButtonNormal">@color/colorButtonNormal</item>
     </style>
 
-    <style name="ChartButton" parent="@android:style/Widget.Material.Button">
+    <style name="ChartButton" parent="android:Widget.Material.Button">
         <item name="android:minHeight">40dip</item>
         <item name="android:minWidth">40dip</item>
         <item name="android:maxHeight">40dip</item>

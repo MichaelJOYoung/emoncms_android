@@ -40,4 +40,13 @@
             android:entries="@array/escale_text"
             android:entryValues="@array/escale_values" />
     </PreferenceCategory>
+    <PreferenceCategory
+        android:title="APP SETTINGS">
+
+        <CheckBoxPreference
+            android:key="emoncms_fullscreen"
+            android:title="Full Screen"
+            android:summary="Hide status and navigation bars while emoncms is open" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

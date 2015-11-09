@@ -7,7 +7,7 @@
         <item name="android:background">@color/windowBackground</item>
     </style>
 
-    <style name="ChartButton" parent="@android:style/Widget.Button">
+    <style name="ChartButton" parent="android:Widget.Holo.Button">
         <item name="android:minHeight">40dip</item>
         <item name="android:minWidth">40dip</item>
         <item name="android:maxHeight">40dip</item>

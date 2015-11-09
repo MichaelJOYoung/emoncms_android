@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -35,7 +37,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -49,6 +50,7 @@ public class MainFragment extends Fragment
     static String emoncmsAPIKEY;
     static String emoncmsProtocol;
     static float emoncmsescale;
+
     TextView txtPower;
     TextView txtUseToday;
     TextView txtDebug;
@@ -58,7 +60,6 @@ public class MainFragment extends Fragment
     Handler mHandler = new Handler();
     Float yesterdaysPowerUsage = 0F;
     Float totalPowerUsage = 0F;
-    int todaysDate = 0;
     int powerGraphLength = -6;
     boolean resetPowerGraph = false;
     Button chart1_3h;
@@ -70,7 +71,84 @@ public class MainFragment extends Fragment
     int wattFeedId = 0;
     int kWhFeelId = 0;
 
-    boolean startDynamicGet = false;
+    int dailyChartUpdateInterval = 60000;
+    long nextDailyCharUpdate = 0;
+
+
+    private Runnable mGetFeedsRunner = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            String url = String.format("%s%s/feed/list.json?apikey=%s", emoncmsProtocol, emoncmsURL, emoncmsAPIKEY);
+
+            JsonArrayRequest jsArrayRequest = new JsonArrayRequest
+                    (url, new Response.Listener<JSONArray>()
+                    {
+
+                        @Override
+                        public void onResponse(JSONArray response)
+                        {
+                            for (int i = 0; i < response.length(); i++)
+                            {
+                                JSONObject row;
+                                try
+                                {
+                                    row = response.getJSONObject(i);
+                                    int id = row.getInt("id");
+                                    if (id == wattFeedId)
+                                    {
+                                        Float power = Float.parseFloat(row.getString("value"));
+                                        txtPower.setText(String.format("%.0fW", power));
+                                    }
+                                    else if (id == kWhFeelId)
+                                    {
+                                        totalPowerUsage = ((Double) row.getDouble("value")).floatValue() * emoncmsescale;
+                                    }
+
+                                }
+                                catch (JSONException e)
+                                {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (blnDebugOnShow)
+                            {
+                                blnDebugOnShow = false;
+                                txtDebug.setVisibility(View.GONE);
+                            }
+
+                            mHandler.post(mGetPowerHistoryRunner);
+
+                            if (Calendar.getInstance().getTimeInMillis() > nextDailyCharUpdate)
+                            {
+                                nextDailyCharUpdate = Calendar.getInstance().getTimeInMillis() + dailyChartUpdateInterval;
+                                mHandler.post(mDaysofWeekRunner);
+                            }
+                            else
+                            {
+                                mHandler.post(mGetPowerHistoryRunner);
+                            }
+                        }
+                    }, new Response.ErrorListener()
+                    {
+
+                        @Override
+                        public void onErrorResponse(VolleyError error)
+                        {
+                            blnDebugOnShow = true;
+                            txtDebug.setText("CONNECTION ERROR");
+                            txtDebug.setVisibility(View.VISIBLE);
+                            mHandler.postDelayed(mGetFeedsRunner, 5000);
+                        }
+                    });
+
+            jsArrayRequest.setTag(TAG);
+            HTTPClient.getInstance(getActivity()).addToRequestQueue(jsArrayRequest);
+        }
+    };
+
 
     private Runnable mDaysofWeekRunner = new Runnable()
     {
@@ -150,91 +228,27 @@ public class MainFragment extends Fragment
                                 dataset.setValueTextSize(getResources().getDimension(R.dimen.chartValueTextSize));
                                 BarData barData = new BarData(labels, dataset);
                                 chart2.setData(barData);
+
+                                if (yesterdaysPowerUsage > 0)
+                                {
+                                    Float todaysPowerUsage = totalPowerUsage - yesterdaysPowerUsage;
+
+                                    //BarData data = chart2.getData();
+                                    //BarDataSet set = data.getDataSetByIndex(0);
+
+                                    //Entry e = set.getEntryForXIndex(set.getEntryCount() - 1);
+                                    Entry e = dataset.getEntryForXIndex(dataset.getEntryCount() - 1);
+                                    e.setVal(todaysPowerUsage);
+
+                                    txtUseToday.setText(String.format("%.1fkWh", todaysPowerUsage));
+                                }
+
+                                chart2.notifyDataSetChanged();
                                 chart2.invalidate();
                             }
                             catch (Exception e)
                             {
                                 e.printStackTrace();
-                            }
-
-                            if (blnDebugOnShow)
-                            {
-                                blnDebugOnShow = false;
-                                txtDebug.setVisibility(View.GONE);
-                            }
-
-                            mHandler.post(mGetFeedsRunner);
-                            startDynamicGet = true;
-                        }
-                    }, new Response.ErrorListener()
-                    {
-
-                        @Override
-                        public void onErrorResponse(VolleyError error)
-                        {
-                            blnDebugOnShow = true;
-                            txtDebug.setText("CONNECTION ERROR");
-                            txtDebug.setVisibility(View.VISIBLE);
-                            mHandler.postDelayed(mDaysofWeekRunner, 5000);
-                        }
-                    });
-
-            jsArrayRequest.setTag(TAG);
-            HTTPClient.getInstance(getActivity()).addToRequestQueue(jsArrayRequest);
-        }
-    };
-
-    private Runnable mGetFeedsRunner = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            String url = String.format("%s%s/feed/list.json?apikey=%s", emoncmsProtocol, emoncmsURL, emoncmsAPIKEY);
-
-            JsonArrayRequest jsArrayRequest = new JsonArrayRequest
-                    (url, new Response.Listener<JSONArray>()
-                    {
-
-                        @Override
-                        public void onResponse(JSONArray response)
-                        {
-                            for (int i = 0; i < response.length(); i++)
-                            {
-                                JSONObject row;
-                                try
-                                {
-                                    row = response.getJSONObject(i);
-                                    int id = row.getInt("id");
-                                    if (id == wattFeedId)
-                                    {
-                                        Float power = Float.parseFloat(row.getString("value"));
-                                        txtPower.setText(String.format("%.0fW", power));
-                                    }
-                                    else if (id == kWhFeelId)
-                                    {
-                                        totalPowerUsage = ((Double) row.getDouble("value")).floatValue() * emoncmsescale;
-                                    }
-
-                                }
-                                catch (JSONException e)
-                                {
-                                    e.printStackTrace();
-                                }
-                            }
-
-                            if (yesterdaysPowerUsage > 0)
-                            {
-                                Float todaysPowerUsage = totalPowerUsage - yesterdaysPowerUsage;
-
-                                BarData data = chart2.getData();
-                                BarDataSet set = data.getDataSetByIndex(0);
-
-                                Entry e = set.getEntryForXIndex(set.getEntryCount() - 1);
-                                e.setVal(todaysPowerUsage);
-
-                                chart2.notifyDataSetChanged();
-                                chart2.invalidate();
-                                txtUseToday.setText(String.format("%.1fkWh", todaysPowerUsage));
                             }
 
                             if (blnDebugOnShow)
@@ -254,7 +268,7 @@ public class MainFragment extends Fragment
                             blnDebugOnShow = true;
                             txtDebug.setText("CONNECTION ERROR");
                             txtDebug.setVisibility(View.VISIBLE);
-                            mHandler.postDelayed(mGetFeedsRunner, 5000);
+                            mHandler.postDelayed(mDaysofWeekRunner, 5000);
                         }
                     });
 
@@ -262,7 +276,6 @@ public class MainFragment extends Fragment
             HTTPClient.getInstance(getActivity()).addToRequestQueue(jsArrayRequest);
         }
     };
-
 
     private Runnable mGetPowerHistoryRunner = new Runnable()
     {
@@ -360,12 +373,7 @@ public class MainFragment extends Fragment
                         txtDebug.setVisibility(View.GONE);
                     }
 
-                    if (Calendar.getInstance().get(Calendar.DAY_OF_WEEK_IN_MONTH) != todaysDate)
-                    {
-                        todaysDate = Calendar.getInstance().get(Calendar.DAY_OF_WEEK_IN_MONTH);
-                        mHandler.postDelayed(mDaysofWeekRunner, 10000);
-                    } else
-                        mHandler.postDelayed(mGetFeedsRunner, 10000);
+                    mHandler.postDelayed(mGetFeedsRunner, 10000);
                 }
             }, new Response.ErrorListener()
             {
@@ -376,7 +384,7 @@ public class MainFragment extends Fragment
                     blnDebugOnShow = true;
                     txtDebug.setText("CONNECTION ERROR");
                     txtDebug.setVisibility(View.VISIBLE);
-                    mHandler.postDelayed(mGetPowerHistoryRunner, 5000);
+                    mHandler.postDelayed(mGetFeedsRunner, 5000);
                 }
             });
 
@@ -476,20 +484,7 @@ public class MainFragment extends Fragment
     public void onResume()
     {
         super.onResume();
-        int day_of_month = Calendar.getInstance().get(Calendar.DAY_OF_WEEK_IN_MONTH);
-        if (day_of_month != todaysDate)
-        {
-            todaysDate = Calendar.getInstance().get(Calendar.DAY_OF_WEEK_IN_MONTH);
-            startDynamicGet = false;
-        }
-
-        if (!emoncmsURL.equals("") && !emoncmsAPIKEY.equals(""))
-        {
-            if (startDynamicGet)
-                mHandler.post(mGetFeedsRunner);
-            else
-                mHandler.post(mDaysofWeekRunner);
-        }
+        mHandler.post(mGetFeedsRunner);
     }
 
     @Override
