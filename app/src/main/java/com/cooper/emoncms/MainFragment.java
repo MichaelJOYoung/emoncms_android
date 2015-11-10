@@ -50,6 +50,7 @@ public class MainFragment extends Fragment
     static String emoncmsAPIKEY;
     static String emoncmsProtocol;
     static float emoncmsescale;
+    static boolean keepScreenOn = false;
 
     TextView txtPower;
     TextView txtUseToday;
@@ -405,6 +406,7 @@ public class MainFragment extends Fragment
         kWhFeelId = Integer.valueOf(SP.getString("emoncms_kwh_feed", "0"));
         emoncmsProtocol = SP.getBoolean("emoncms_usessl", false) ? "https://" : "http://";
         emoncmsescale = Integer.valueOf(SP.getString("emoncms_escale", "0")) == 0 ? 1.0F : 0.001F;
+        keepScreenOn = SP.getBoolean("emoncms_keep_screen_on", false);
     }
 
     @Override
@@ -478,6 +480,11 @@ public class MainFragment extends Fragment
         xAxis.setDrawGridLines(false);
         xAxis.setDrawAxisLine(false);
         xAxis.setTextSize(getResources().getDimension(R.dimen.chartValueTextSize));
+
+        if (keepScreenOn)
+            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else
+            getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override

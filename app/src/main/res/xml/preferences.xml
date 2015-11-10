@@ -47,6 +47,12 @@
             android:key="emoncms_fullscreen"
             android:title="Full Screen"
             android:summary="Hide status and navigation bars while emoncms is open" />
+
+        <CheckBoxPreference
+            android:key="emoncms_keep_screen_on"
+            android:title="Keep Screen On"
+            android:summary="Stops the device screen powering off" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
