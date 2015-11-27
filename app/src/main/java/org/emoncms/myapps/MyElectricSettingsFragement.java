@@ -1,4 +1,4 @@
-package com.cooper.emoncms;
+package org.emoncms.myapps;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.preference.ListPreference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -16,9 +15,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class PrefFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener
+public class MyElectricSettingsFragement extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener
 {
-    static final String TAG = "PREFFRAGMENT";
+    static final String TAG = "MESETTINGSFRAGMENT";
+
     private String emoncmsProtocol;
     private String emoncmsURL;
     private String emoncmsAPIKEY;
@@ -32,12 +32,12 @@ public class PrefFragment extends PreferenceFragment implements SharedPreference
         super.onCreate(savedInstanceState);
 
         // Load the preferences from an XML resource
-        addPreferencesFromResource(R.xml.preferences);
+        addPreferencesFromResource(R.xml.me_preferences);
 
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getBaseContext());
         loadValues();
-        powerFeedPreference = (ListPreference) this.findPreference("emoncms_power_feed");
-        kWhFeedPreference = (ListPreference) this.findPreference("emoncms_kwh_feed");
+        powerFeedPreference = (ListPreference) this.findPreference("myelectric_power_feed");
+        kWhFeedPreference = (ListPreference) this.findPreference("myelectric_kwh_feed");
         updateFeedList();
     }
 

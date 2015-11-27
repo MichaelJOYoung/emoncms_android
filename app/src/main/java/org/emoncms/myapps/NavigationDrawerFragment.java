@@ -1,4 +1,4 @@
-package com.cooper.emoncms;
+package org.emoncms.myapps;
 
 
 import android.app.Activity;

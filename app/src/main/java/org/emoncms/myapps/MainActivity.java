@@ -1,4 +1,4 @@
-package com.cooper.emoncms;
+package org.emoncms.myapps;
 
 import android.app.FragmentManager;
 import android.content.SharedPreferences;
@@ -8,9 +8,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks
@@ -23,7 +20,7 @@ public class MainActivity extends FragmentActivity
         super.onCreate(savedInstanceState);
 
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        isFullScreen = SP.getBoolean("emoncms_fullscreen", false);
+        isFullScreen = SP.getBoolean("display_fullscreen", false);
 
         setContentView(R.layout.activity_main);
 
@@ -38,7 +35,7 @@ public class MainActivity extends FragmentActivity
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
         fragmentManager.beginTransaction()
-                .replace(R.id.container, new MainFragment(), getResources().getString(R.string.tag_main_fragment))
+                .replace(R.id.container, new MyElectricMainFragement(), getResources().getString(R.string.tag_me_fragment))
                 .commit();
     }
 
@@ -87,12 +84,12 @@ public class MainActivity extends FragmentActivity
         switch (position) {
             case 0:
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.container, new MainFragment(), getResources().getString(R.string.tag_main_fragment))
+                        .replace(R.id.container, new MyElectricMainFragement(), getResources().getString(R.string.tag_me_fragment))
                         .commit();
                 break;
             case 1:
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.container, new PrefFragment(), getResources().getString(R.string.tag_settings_fragment))
+                        .replace(R.id.container, new SettingsFragment(), getResources().getString(R.string.tag_settings_fragment))
                         .commit();
                 break;
         }
@@ -100,13 +97,14 @@ public class MainActivity extends FragmentActivity
 
     @Override
     public void onBackPressed() {
-        if (getFragmentManager().findFragmentByTag(getResources().getString(R.string.tag_settings_fragment)) != null)
+
+        if (getFragmentManager().findFragmentByTag(getResources().getString(R.string.tag_me_fragment)) == null)
         {
             NavigationDrawerFragment navFragment = (NavigationDrawerFragment) getFragmentManager().findFragmentByTag(getResources().getString(R.string.tag_navigation_fragment));
             navFragment.setSelectedItem(0);
 
             getFragmentManager().beginTransaction()
-                    .replace(R.id.container, new MainFragment(), getResources().getString(R.string.tag_main_fragment))
+                    .replace(R.id.container, new MyElectricMainFragement(), getResources().getString(R.string.tag_me_fragment))
                     .commit();
         }
         else

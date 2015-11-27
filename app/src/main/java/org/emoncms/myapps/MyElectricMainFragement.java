@@ -1,4 +1,4 @@
-package com.cooper.emoncms;
+package org.emoncms.myapps;
 
 import android.app.Fragment;
 import android.content.SharedPreferences;
@@ -6,14 +6,16 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.android.volley.Response;
@@ -43,13 +45,15 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class MainFragment extends Fragment
+public class MyElectricMainFragement extends Fragment
 {
     static final String TAG = "emoncms";
     static String emoncmsURL;
     static String emoncmsAPIKEY;
     static String emoncmsProtocol;
-    static float emoncmsescale;
+    static String powerCostSymbol;
+    static float powerCost = 0;
+    static float powerScale;
     static boolean keepScreenOn = false;
 
     TextView txtPower;
@@ -68,6 +72,8 @@ public class MainFragment extends Fragment
     Button chart1_D;
     Button chart1_W;
     Button chart1_M;
+    ImageButton me_settings;
+    SwitchCompat costSwitch;
 
     int wattFeedId = 0;
     int kWhFeelId = 0;
@@ -75,6 +81,10 @@ public class MainFragment extends Fragment
     int dailyChartUpdateInterval = 60000;
     long nextDailyCharUpdate = 0;
 
+    float powerNow = 0;
+    float powerToday = 0;
+
+    boolean blnShowCost = false;
 
     private Runnable mGetFeedsRunner = new Runnable()
     {
@@ -99,12 +109,12 @@ public class MainFragment extends Fragment
                                     int id = row.getInt("id");
                                     if (id == wattFeedId)
                                     {
-                                        Float power = Float.parseFloat(row.getString("value"));
-                                        txtPower.setText(String.format("%.0fW", power));
+                                        powerNow = Float.parseFloat(row.getString("value"));
+                                        updateTextFields();
                                     }
                                     else if (id == kWhFeelId)
                                     {
-                                        totalPowerUsage = ((Double) row.getDouble("value")).floatValue() * emoncmsescale;
+                                        totalPowerUsage = ((Double) row.getDouble("value")).floatValue() * powerScale;
                                     }
 
                                 }
@@ -139,7 +149,6 @@ public class MainFragment extends Fragment
                         public void onErrorResponse(VolleyError error)
                         {
                             blnDebugOnShow = true;
-                            txtDebug.setText("CONNECTION ERROR");
                             txtDebug.setVisibility(View.VISIBLE);
                             mHandler.postDelayed(mGetFeedsRunner, 5000);
                         }
@@ -169,8 +178,8 @@ public class MainFragment extends Fragment
             startTime *= 1000;
             endTime *= 1000;
 
-            final long chart2EndTime = endTime;//endTime * 1000;
-            final long chart2StartTime = startTime;//startTime * 1000;
+            final long chart2EndTime = endTime;
+            final long chart2StartTime = startTime;
 
             String url = String.format("%s%s/feed/data.json?id=%d&start=%d&end=%d&interval=86400&skipmissing=1&limitinterval=1&apikey=%s", emoncmsProtocol, emoncmsURL, kWhFeelId, chart2StartTime, chart2EndTime, emoncmsAPIKEY);
             Log.i("EMONCMS", url);
@@ -199,7 +208,7 @@ public class MainFragment extends Fragment
                                     if (date <= chart2EndTime)
                                     {
                                         dates.add(date);
-                                        power.add(((Double) row.getDouble(1)).floatValue() * emoncmsescale);
+                                        power.add(((Double) row.getDouble(1)).floatValue() * powerScale);
                                     }
                                 }
                                 catch (JSONException e)
@@ -232,16 +241,10 @@ public class MainFragment extends Fragment
 
                                 if (yesterdaysPowerUsage > 0)
                                 {
-                                    Float todaysPowerUsage = totalPowerUsage - yesterdaysPowerUsage;
-
-                                    //BarData data = chart2.getData();
-                                    //BarDataSet set = data.getDataSetByIndex(0);
-
-                                    //Entry e = set.getEntryForXIndex(set.getEntryCount() - 1);
+                                    powerToday = totalPowerUsage - yesterdaysPowerUsage;
+                                    updateTextFields();
                                     Entry e = dataset.getEntryForXIndex(dataset.getEntryCount() - 1);
-                                    e.setVal(todaysPowerUsage);
-
-                                    txtUseToday.setText(String.format("%.1fkWh", todaysPowerUsage));
+                                    e.setVal(powerToday);
                                 }
 
                                 chart2.notifyDataSetChanged();
@@ -267,7 +270,6 @@ public class MainFragment extends Fragment
                         public void onErrorResponse(VolleyError error)
                         {
                             blnDebugOnShow = true;
-                            txtDebug.setText("CONNECTION ERROR");
                             txtDebug.setVisibility(View.VISIBLE);
                             mHandler.postDelayed(mDaysofWeekRunner, 5000);
                         }
@@ -383,7 +385,6 @@ public class MainFragment extends Fragment
                 public void onErrorResponse(VolleyError error)
                 {
                     blnDebugOnShow = true;
-                    txtDebug.setText("CONNECTION ERROR");
                     txtDebug.setVisibility(View.VISIBLE);
                     mHandler.postDelayed(mGetFeedsRunner, 5000);
                 }
@@ -394,6 +395,20 @@ public class MainFragment extends Fragment
         }
     };
 
+    private void updateTextFields()
+    {
+        if (blnShowCost)
+        {
+            txtPower.setText(String.format("%s%.2f/h", powerCostSymbol, (powerNow*0.001)*powerCost));
+            txtUseToday.setText(String.format("%s%.2f", powerCostSymbol, powerToday*powerCost));
+        }
+        else
+        {
+            txtPower.setText(String.format("%.0fW", powerNow));
+            txtUseToday.setText(String.format("%.1fkWh", powerToday));
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -402,18 +417,20 @@ public class MainFragment extends Fragment
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getActivity().getBaseContext());
         emoncmsURL = SP.getString("emoncms_url", "emoncms.org");
         emoncmsAPIKEY = SP.getString("emoncms_apikey", "");
-        wattFeedId = Integer.valueOf(SP.getString("emoncms_power_feed", "0"));
-        kWhFeelId = Integer.valueOf(SP.getString("emoncms_kwh_feed", "0"));
         emoncmsProtocol = SP.getBoolean("emoncms_usessl", false) ? "https://" : "http://";
-        emoncmsescale = Integer.valueOf(SP.getString("emoncms_escale", "0")) == 0 ? 1.0F : 0.001F;
-        keepScreenOn = SP.getBoolean("emoncms_keep_screen_on", false);
+        wattFeedId = Integer.valueOf(SP.getString("myelectric_power_feed", "0"));
+        kWhFeelId = Integer.valueOf(SP.getString("myelectric_kwh_feed", "0"));
+        powerScale = Integer.valueOf(SP.getString("myelectric_escale", "0")) == 0 ? 1.0F : 0.001F;
+        keepScreenOn = SP.getBoolean("keep_screen_on", false);
+        powerCost = Float.parseFloat(SP.getString("myelectric_unit_cost", "0"));
+        powerCostSymbol = SP.getString("myelectric_cost_symbol", "£");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState)
     {
-        return inflater.inflate(R.layout.fragment_main, container, false);
+        return inflater.inflate(R.layout.me_fragement, container, false);
     }
 
     @Override
@@ -431,12 +448,16 @@ public class MainFragment extends Fragment
         chart1_D = (Button) view.findViewById(R.id.btnChart1_D);
         chart1_W = (Button) view.findViewById(R.id.btnChart1_W);
         chart1_M = (Button) view.findViewById(R.id.btnChart1_M);
+        me_settings = (ImageButton) view.findViewById(R.id.myelectric_settings);
+        costSwitch = (SwitchCompat) view.findViewById(R.id.tglCost);
 
-        chart1_3h.setOnClickListener(chart1ButtonListener);
-        chart1_6h.setOnClickListener(chart1ButtonListener);
-        chart1_D.setOnClickListener(chart1ButtonListener);
-        chart1_W.setOnClickListener(chart1ButtonListener);
-        chart1_M.setOnClickListener(chart1ButtonListener);
+        chart1_3h.setOnClickListener(buttonListener);
+        chart1_6h.setOnClickListener(buttonListener);
+        chart1_D.setOnClickListener(buttonListener);
+        chart1_W.setOnClickListener(buttonListener);
+        chart1_M.setOnClickListener(buttonListener);
+        me_settings.setOnClickListener(buttonListener);
+        costSwitch.setOnCheckedChangeListener(checkedChangedListener);
 
         chart1 = (LineChart) view.findViewById(R.id.chart1);
         chart1.setDrawGridBackground(false);
@@ -462,6 +483,7 @@ public class MainFragment extends Fragment
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(Color.parseColor("#cccccc"));
         xAxis.setValueFormatter(new TimeFromEpochXAxisValueFormatter());
+        xAxis.setSpaceBetweenLabels(0);
 
         chart2 = (BarChart) view.findViewById(R.id.chart2);
         chart2.setDrawGridBackground(false);
@@ -479,7 +501,6 @@ public class MainFragment extends Fragment
         xAxis.setTextColor(Color.parseColor("#cccccc"));
         xAxis.setDrawGridLines(false);
         xAxis.setDrawAxisLine(false);
-        xAxis.setTextSize(getResources().getDimension(R.dimen.chartValueTextSize));
 
         if (keepScreenOn)
             getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -502,7 +523,15 @@ public class MainFragment extends Fragment
         mHandler.removeCallbacksAndMessages(null);
     }
 
-    private OnClickListener chart1ButtonListener = new OnClickListener() {
+    private CompoundButton.OnCheckedChangeListener checkedChangedListener = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            blnShowCost = isChecked;
+            updateTextFields();
+        }
+    };
+
+    private OnClickListener buttonListener = new OnClickListener() {
         public void onClick(View v) {
 
             switch (v.getId())
@@ -527,6 +556,11 @@ public class MainFragment extends Fragment
                     powerGraphLength = -720; // 30 * 24
                     resetPowerGraph = true;
                     break;
+                case R.id.myelectric_settings:
+                    getActivity().getFragmentManager().beginTransaction()
+                            .replace(R.id.container, new MyElectricSettingsFragement(), getResources().getString(R.string.tag_me_settings_fragment))
+                            .commit();
+                    break;
             }
 
             HTTPClient.getInstance(getActivity()).cancellAll(TAG);
@@ -540,7 +574,8 @@ public class MainFragment extends Fragment
         @Override
         public String getXValue(String original, int index, ViewPortHandler viewPortHandler)
         {
-            DateFormat df = new SimpleDateFormat("HH:mm:ss");
+            DateFormat df = new SimpleDateFormat("HH:mm");
+            //DateFormat df = new SimpleDateFormat("HH:mm:ss");
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(Long.parseLong(original));
             return (df.format(cal.getTime()));
